@@ -3,6 +3,11 @@ name = "jsscli"
 version = "0.1.0"
 edition = "2024"
 description = "Command-line interface for librjss"
+authors = ["Muhammad Riduwan Khafidi <mriduwankhafidi@proton.me>"]
+homepage = "https://github.com/mroczect/jsscli.git"
+repository = "https://github.com/mroczect/jsscli.git"
+license = "MIT"
+documentation = "https://mroczect.github.io/jsscli/"
 
 [dependencies]
 librjss = { git = "https://github.com/mroczect/librjss.git" }
@@ -11,7 +16,7 @@ tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
 toml = "0.8"
 reqwest = { version = "0.12", features = ["json", "cookies", "multipart"] }
 secrecy = { version = "0.10", features = ["serde"] }
@@ -31,3 +36,8 @@ rand = "0.8"
 sha2 = "0.10"
 hkdf = "0.12"
 hex = "0.4"
+
+[build-dependencies]
+chrono = "0.4"
+hostname = "0.4.2"
+whoami = "2.1.2"
