@@ -5,6 +5,7 @@ pub mod config;
 pub mod doctype;
 pub mod file;
 pub mod info;
+pub mod manual;
 
 use crate::cli::{Cli, Command};
 use crate::error::CliResult;
@@ -18,5 +19,6 @@ pub async fn dispatch(cli: Cli) -> CliResult<()> {
         Command::File { cmd } => file::handle(cmd.clone(), &cli).await,
         Command::Info => info::handle(&cli).await,
         Command::Changelog { count } => changelog::handle(*count, &cli).await,
+        Command::Manual => manual::handle(&cli).await,
     }
 }
