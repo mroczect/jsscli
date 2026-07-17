@@ -1,6 +1,8 @@
 use crate::cli::OutputFormat;
 use crate::error::CliResult;
-use comfy_table::{Cell, ContentArrangement, Table, presets::UTF8_FULL};
+use comfy_table::modifiers::UTF8_ROUND_CORNERS;
+use comfy_table::presets::UTF8_FULL;
+use comfy_table::{Cell, ContentArrangement, Table};
 use serde_json::Value;
 
 pub fn print_data(value: &Value, fmt: OutputFormat) -> CliResult<()> {
@@ -45,7 +47,7 @@ fn print_table(value: &Value) -> CliResult<()> {
         let mut table = Table::new();
         table
             .load_preset(UTF8_FULL)
-            .apply_modifier(comfy_table::modifiers::UTF8_ROUND_CORNERS);
+            .apply_modifier(UTF8_ROUND_CORNERS);
         table.set_header(["Key", "Value"]);
         for (k, v) in root {
             table.add_row([k.clone(), stringify(v)]);
@@ -71,17 +73,13 @@ fn print_array_as_table(items: &[Value]) -> CliResult<()> {
 
     let mut table = Table::new();
     table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(comfy_table::modifiers::UTF8_ROUND_CORNERS)
-        .set_content_arrangement(ContentArrangement::Dynamic);
+        .load_preset(comfy_table::presets::ASCII_BORDERS_ONLY_CONDENSED)
+        .set_content_arrangement(ContentArrangement::Dynamic)
+        .force_no_tty();
 
     if let Some(Value::Object(first)) = items.first() {
         let headers: Vec<String> = first.keys().cloned().collect();
-        table.set_header(
-            headers
-                .iter()
-                .map(|h| Cell::new(h).fg(comfy_table::Color::Cyan)),
-        );
+        table.set_header(headers.iter().map(|h| Cell::new(h)));
 
         for item in items {
             if let Value::Object(obj) = item {
