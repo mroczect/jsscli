@@ -82,12 +82,12 @@ fn main() {
         "--date=short",
         "-n", "50"
     ]).unwrap_or_else(|| "".to_string());
-    
+
     let changelog_array = if changelog_json.is_empty() {
         "[]".to_string()
     } else {
         format!("[{}]", changelog_json.replace("}\n{", "},{"))
     };
-    
+
     println!("cargo:rustc-env=CHANGELOG_JSON={}", changelog_array);
 }

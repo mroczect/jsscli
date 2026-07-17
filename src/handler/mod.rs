@@ -5,3 +5,4 @@ pub mod config;
 pub mod doctype;
 pub mod file;
 pub mod info;
+pub mod manual;
