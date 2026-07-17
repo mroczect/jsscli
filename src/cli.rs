@@ -41,6 +41,11 @@ pub enum AuthModeKind {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Command {
+    Info,
+    Changelog {
+    #[arg(short = 'n', long, default_value_t = 50)]
+            count: usize,
+    },
     Auth {
         #[command(subcommand)]
         cmd: AuthCommand,
