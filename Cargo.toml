@@ -1,0 +1,33 @@
+[package]
+name = "jsscli"
+version = "0.1.0"
+edition = "2024"
+description = "Command-line interface for librjss"
+
+[dependencies]
+librjss = { git = "https://github.com/mroczect/librjss.git" }
+clap = { version = "4.6", features = ["derive", "env", "wrap_help"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+reqwest = { version = "0.12", features = ["json", "cookies", "multipart"] }
+secrecy = { version = "0.10", features = ["serde"] }
+dirs-next = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+comfy-table = "7"
+colored = "2"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+shellexpand = "3"
+rpassword = "7"
+keyring = "2"
+colored_json = "5"
+aes-gcm = "0.10"
+rand = "0.8"
+sha2 = "0.10"
+hkdf = "0.12"
+hex = "0.4"
