@@ -1,6 +1,6 @@
 [package]
 name = "jsscli"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Command-line interface for librjss"
 authors = ["Muhammad Riduwan Khafidi <mriduwankhafidi@proton.me>"]
@@ -36,6 +36,7 @@ rand = "0.8"
 sha2 = "0.10"
 hkdf = "0.12"
 hex = "0.4"
+minus = { version = "5", features = ["static_output"] }
 
 [build-dependencies]
 chrono = "0.4"
