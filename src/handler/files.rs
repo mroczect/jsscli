@@ -23,9 +23,7 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
         let v: Value = serde_json::from_str(&result)?;
 
         let register_id = v["data"][0]["register_id"].as_str().ok_or_else(|| {
-            CliError::Other(
-                "Agreement number not found or has no register_id".into(),
-            )
+            CliError::Other("Agreement number not found or has no register_id".into())
         })?;
 
         if register_id.is_empty() {
