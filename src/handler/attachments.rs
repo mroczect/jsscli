@@ -16,11 +16,11 @@ pub async fn handle(cli: &Cli, doctype: &str, name: &str) -> Result<Value, CliEr
     let files = collect_files(&data);
 
     if files.is_empty() {
-        eprintln!("Tidak ada file lampiran ditemukan di dokumen ini.");
+        eprintln!("No attachment files found in this document.");
         return Ok(json!({ "downloaded": [] }));
     }
 
-    eprintln!("File-file terlampir di {doctype} `{name}`:");
+    eprintln!("Attached files in {doctype} `{name}`:");
     for (i, (label, url)) in files.iter().enumerate() {
         eprintln!("  {}. {} -> {}", i + 1, label, url);
     }
@@ -32,7 +32,7 @@ pub async fn handle(cli: &Cli, doctype: &str, name: &str) -> Result<Value, CliEr
     let choice = line.trim().to_lowercase();
 
     if choice == "n" || choice == "no" {
-        return Ok(json!({ "downloaded": [], "message": "Dibatalkan" }));
+        return Ok(json!({ "downloaded": [], "message": "Cancelled" }));
     }
 
     let selected: Vec<usize> = if choice == "y" || choice == "yes" || choice.is_empty() {
@@ -46,7 +46,7 @@ pub async fn handle(cli: &Cli, doctype: &str, name: &str) -> Result<Value, CliEr
     };
 
     if selected.is_empty() {
-        eprintln!("Tidak ada file yang dipilih.");
+        eprintln!("No files selected.");
         return Ok(json!({ "downloaded": [] }));
     }
 
@@ -57,7 +57,7 @@ pub async fn handle(cli: &Cli, doctype: &str, name: &str) -> Result<Value, CliEr
         let (label, url) = &files[idx];
         let filename = url.rsplit('/').next().unwrap_or("file");
         let save_path = download_dir.join(filename);
-        eprintln!("Mengunduh `{}` ke {}...", label, save_path.display());
+        eprintln!("Downloading `{}` to {}...", label, save_path.display());
         client.download_file_to_path(url, &save_path).await?;
         downloaded.push(json!({
             "label": label,
