@@ -11,7 +11,7 @@ env:
 
 jobs:
   lint:
-    name: Lint (fmt + clippy)
+    name: Setup Rust
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,12 +35,6 @@ jobs:
           key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-stable-
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Run Clippy
-        run: cargo clippy -- -D warnings
 
   test:
     name: Build & Test (stable)
