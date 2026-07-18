@@ -70,14 +70,14 @@ pub async fn whoami(cli: &Cli) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     let active = settings.resolve_active(cli.profile.as_deref())?;
 
-    if let Some(rec) = SessionRecord::load()? {
-        if rec.matches_account(&active) {
-            return Ok(json!({
-                "full_name": rec.full_name,
-                "sitename": rec.sitename,
-                "roles": rec.roles,
-            }));
-        }
+    if let Some(rec) = SessionRecord::load()?
+        && rec.matches_account(&active)
+    {
+        return Ok(json!({
+            "full_name": rec.full_name,
+            "sitename": rec.sitename,
+            "roles": rec.roles,
+        }));
     }
 
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
