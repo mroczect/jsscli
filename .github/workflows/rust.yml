@@ -10,23 +10,54 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    name: Lint & Format & Build & Test
+  lint:
+    name: Lint (fmt + clippy)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust: [stable, 1.75.0] # MSRV yang aman
     steps:
       - uses: actions/checkout@v4
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y groff libdbus-1-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
 
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-stable-
+
+      - name: Check formatting
+        run: cargo fmt --all
+
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+  test:
+    name: Test (Rust ${{ matrix.rust }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable, 1.75.0]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+
+      - name: Setup Rust (${{ matrix.rust }})
+        uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
-          components: rustfmt, clippy
 
       - name: Cache Cargo
         uses: actions/cache@v4
@@ -38,12 +69,6 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
-
-      - name: Check formatting
-        run: cargo fmt --all
-
-      - name: Run Clippy
-        run: cargo clippy -- -D warnings
 
       - name: Build
         run: cargo build --verbose

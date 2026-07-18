@@ -71,29 +71,31 @@ pub async fn handle(cli: &Cli, doctype: &str, name: &str) -> Result<Value, CliEr
 
 fn collect_files(value: &Value) -> Vec<(String, String)> {
     let mut files = Vec::new();
-    if let Value::Object(obj) = value {
-        if let Some(data) = obj.get("data") {
-            if let Value::Object(data_obj) = data {
-                for (key, val) in data_obj {
-                    if let Value::String(s) = val {
-                        if s.starts_with("/private/files/") || s.starts_with("/files/") {
-                            files.push((key.clone(), s.clone()));
-                        }
-                    }
-                }
+
+    if let Value::Object(obj) = value
+        && let Some(data) = obj.get("data")
+        && let Value::Object(data_obj) = data
+    {
+        for (key, val) in data_obj {
+            if let Value::String(s) = val
+                && (s.starts_with("/private/files/") || s.starts_with("/files/"))
+            {
+                files.push((key.clone(), s.clone()));
             }
         }
     }
-    if files.is_empty() {
-        if let Value::Object(root) = value {
-            for (key, val) in root {
-                if let Value::String(s) = val {
-                    if s.starts_with("/private/files/") || s.starts_with("/files/") {
-                        files.push((key.clone(), s.clone()));
-                    }
-                }
+
+    if files.is_empty()
+        && let Value::Object(root) = value
+    {
+        for (key, val) in root {
+            if let Value::String(s) = val
+                && (s.starts_with("/private/files/") || s.starts_with("/files/"))
+            {
+                files.push((key.clone(), s.clone()));
             }
         }
     }
+
     files
 }

@@ -6,7 +6,7 @@ use crate::config::{
 use crate::error::CliError;
 use crate::session::SessionRecord;
 use serde_json::{Value, json};
-
+#[allow(clippy::too_many_arguments)]
 pub async fn add(
     _cli: &Cli,
     name: String,
@@ -134,10 +134,10 @@ pub async fn remove(_cli: &Cli, name: String) -> Result<Value, CliError> {
         settings.active_account = None;
         settings.save()?;
     }
-    if let Some(rec) = SessionRecord::load()? {
-        if rec.matches_account(&name) {
-            let _ = SessionRecord::clear();
-        }
+    if let Some(rec) = SessionRecord::load()?
+        && rec.matches_account(&name)
+    {
+        let _ = SessionRecord::clear();
     }
     Ok(json!({"ok": true, "removed": name}))
 }
