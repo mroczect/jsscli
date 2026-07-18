@@ -1,13 +1,12 @@
 use crate::cli::Cli;
-use crate::error::CliResult;
-use crate::output;
-use serde_json::json;
+use crate::error::CliError;
+use serde_json::{Value, json};
 
-pub async fn handle(cli: &Cli) -> CliResult<()> {
+pub async fn handle(_cli: &Cli) -> Result<Value, CliError> {
     let authors_raw = env!("CARGO_PKG_AUTHORS");
     let (first_author_name, first_author_email) = parse_first_author(authors_raw);
 
-    let info = json!({
+    Ok(json!({
         "name": env!("CARGO_PKG_NAME"),
         "version": env!("CARGO_PKG_VERSION"),
         "description": env!("CARGO_PKG_DESCRIPTION"),
@@ -38,10 +37,7 @@ pub async fn handle(cli: &Cli) -> CliResult<()> {
             "rustc": env!("RUSTC_VERSION"),
             "cargo": env!("CARGO_VERSION"),
         }
-    });
-
-    output::print_data(&info, cli.output)?;
-    Ok(())
+    }))
 }
 
 fn parse_first_author(authors: &str) -> (String, String) {
