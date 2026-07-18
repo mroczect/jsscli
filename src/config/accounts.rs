@@ -159,7 +159,7 @@ impl AccountStore {
             use std::os::unix::fs::PermissionsExt;
             std::fs::write(&p, &s)?;
             let _ = std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o600));
-            return Ok(());
+            Ok(())
         }
         #[cfg(not(unix))]
         {
