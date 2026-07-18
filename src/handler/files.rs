@@ -24,13 +24,13 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
 
         let register_id = v["data"][0]["register_id"].as_str().ok_or_else(|| {
             CliError::Other(
-                "Nomor perjanjian tidak ditemukan atau tidak memiliki register_id".into(),
+                "Agreement number not found or has no register_id".into(),
             )
         })?;
 
         if register_id.is_empty() {
             return Err(CliError::Other(
-                "register_id kosong; tidak bisa menemukan Data Pengajuan".into(),
+                "register_id is empty; cannot find Data Pengajuan".into(),
             ));
         }
         register_id.to_string()
@@ -42,11 +42,11 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
     let files = collect_files(&data);
 
     if files.is_empty() {
-        eprintln!("Tidak ada file lampiran ditemukan di dokumen ini.");
+        eprintln!("No attachment files found in this document.");
         return Ok(json!({ "downloaded": [] }));
     }
 
-    eprintln!("File-file terlampir di Data Pengajuan `{pengajuan_name}`:");
+    eprintln!("Attached files in Data Pengajuan `{pengajuan_name}`:");
     for (i, (label, url)) in files.iter().enumerate() {
         eprintln!("  {}. {} -> {}", i + 1, label, url);
     }
@@ -58,7 +58,7 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
     let choice = line.trim().to_lowercase();
 
     if choice == "n" || choice == "no" {
-        return Ok(json!({ "downloaded": [], "message": "Dibatalkan" }));
+        return Ok(json!({ "downloaded": [], "message": "Cancelled" }));
     }
 
     let selected: Vec<usize> = if choice == "y" || choice == "yes" || choice.is_empty() {
@@ -72,7 +72,7 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
     };
 
     if selected.is_empty() {
-        eprintln!("Tidak ada file yang dipilih.");
+        eprintln!("No files selected.");
         return Ok(json!({ "downloaded": [] }));
     }
 
@@ -83,7 +83,7 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
         let (label, url) = &files[idx];
         let filename = url.rsplit('/').next().unwrap_or("file");
         let save_path = download_dir.join(filename);
-        eprintln!("Mengunduh `{}` ke {}...", label, save_path.display());
+        eprintln!("Downloading `{}` to {}...", label, save_path.display());
         client.download_file_to_path(url, &save_path).await?;
         downloaded.push(json!({
             "label": label,
