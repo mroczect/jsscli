@@ -1,8 +1,11 @@
 pub mod account;
+pub mod attachments;
 pub mod auth;
+pub mod call_method;
 pub mod changelog;
 pub mod config;
 pub mod doctype;
 pub mod file;
+pub mod files;
 pub mod info;
 pub mod manual;
