@@ -8,6 +8,7 @@ pub mod doctype;
 pub mod file;
 pub mod files;
 pub mod info;
+pub mod kp;
 pub mod manual;
 pub mod search;
 use crate::cli::{Cli, Command};
@@ -36,5 +37,9 @@ pub async fn dispatch(cli: Cli) -> Result<Value, CliError> {
             limit,
             doctype,
         } => search::handle(query.clone(), *limit, doctype.clone(), &cli).await,
+        Command::Tunggakan { no_rekening_kredit } => {
+            crate::handler::tunggakan::handle(&cli, no_rekening_kredit).await
+        }
+        Command::Kp { no_perjanjian } => kp::handle(&cli, no_perjanjian).await,
     }
 }
