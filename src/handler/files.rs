@@ -27,7 +27,7 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
         ("Master Data Nasabah", name.to_string())
     };
 
-    let body = client.get_doc(&doctype, &docname).await?;
+    let body = client.get_doc(doctype, &docname).await?;
     let data: Value = serde_json::from_str(&body)?;
 
     let files = collect_files(&data);
@@ -88,29 +88,31 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
 
 fn collect_files(value: &Value) -> Vec<(String, String)> {
     let mut files = Vec::new();
-    if let Value::Object(obj) = value {
-        if let Some(data) = obj.get("data") {
-            if let Value::Object(data_obj) = data {
-                for (key, val) in data_obj {
-                    if let Value::String(s) = val {
-                        if s.starts_with("/private/files/") || s.starts_with("/files/") {
-                            files.push((key.clone(), s.clone()));
-                        }
-                    }
-                }
+
+    if let Value::Object(obj) = value
+        && let Some(data) = obj.get("data")
+        && let Value::Object(data_obj) = data
+    {
+        for (key, val) in data_obj {
+            if let Value::String(s) = val
+                && (s.starts_with("/private/files/") || s.starts_with("/files/"))
+            {
+                files.push((key.clone(), s.clone()));
             }
         }
     }
-    if files.is_empty() {
-        if let Value::Object(root) = value {
-            for (key, val) in root {
-                if let Value::String(s) = val {
-                    if s.starts_with("/private/files/") || s.starts_with("/files/") {
-                        files.push((key.clone(), s.clone()));
-                    }
-                }
+
+    if files.is_empty()
+        && let Value::Object(root) = value
+    {
+        for (key, val) in root {
+            if let Value::String(s) = val
+                && (s.starts_with("/private/files/") || s.starts_with("/files/"))
+            {
+                files.push((key.clone(), s.clone()));
             }
         }
     }
+
     files
 }
