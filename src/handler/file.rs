@@ -1,8 +1,8 @@
 use crate::cli::Cli;
 use crate::client;
 use crate::config::Settings;
-use crate::error::{CliError, CliResult};
-use crate::output;
+use crate::error::CliError;
+use serde_json::{Value, json};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -12,7 +12,7 @@ pub async fn upload(
     doctype: &str,
     docname: &str,
     fieldname: &str,
-) -> CliResult<()> {
+) -> Result<Value, CliError> {
     let expanded = shellexpand::tilde(file).to_string();
     let path = Path::new(&expanded);
     if !path.exists() {
@@ -39,13 +39,8 @@ pub async fn upload(
     let resp = client
         .upload_file(file_name, content, doctype, docname, fieldname)
         .await?;
-    output::print_string(&resp, cli.output)?;
-    if !cli.quiet {
-        output::success(format!(
-            "Uploaded `{file_name}` → {doctype}/{docname}/{fieldname}"
-        ));
-    }
-    Ok(())
+    let v: Value = serde_json::from_str(&resp).unwrap_or(Value::String(resp));
+    Ok(json!({"ok": true, "data": v}))
 }
 
 pub async fn download(
@@ -53,7 +48,7 @@ pub async fn download(
     url: &str,
     output_path: Option<String>,
     yes: bool,
-) -> CliResult<()> {
+) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
 
@@ -82,8 +77,5 @@ pub async fn download(
     }
 
     client.download_file_to_path(url, &out).await?;
-    if !cli.quiet {
-        output::success(format!("Saved `{}`", out.display()));
-    }
-    Ok(())
+    Ok(json!({"ok": true, "path": out.display().to_string()}))
 }
