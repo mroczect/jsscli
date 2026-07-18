@@ -81,7 +81,7 @@ fn main() {
         "--pretty=format:{\"hash\":\"%h\",\"author\":\"%an\",\"date\":\"%ad\",\"message\":\"%s\"}",
         "--date=short",
         "-n", "50"
-    ]).unwrap_or_else(|| "".to_string());
+    ]).unwrap_or_default();
 
     let changelog_array = if changelog_json.is_empty() {
         "[]".to_string()
