@@ -76,6 +76,12 @@ pub enum Command {
         #[arg(long)]
         doctype: Option<String>,
     },
+    Tunggakan {
+        no_rekening_kredit: String,
+    },
+    Kp {
+        no_perjanjian: String,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]
