@@ -7,6 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  BINARY_NAME: jsscli
 
 permissions:
   contents: write
@@ -29,19 +30,32 @@ jobs:
       - name: Run tests
         run: cargo test --release --locked
 
-      - name: Build release
+      - name: Build release binary
         run: cargo build --release --locked --verbose
 
-      - name: Upload artifact
+      - name: Smoke test
+        run: |
+          ./target/release/$BINARY_NAME --version
+          ./target/release/$BINARY_NAME --help
+
+      - name: Generate SHA256 checksum
+        run: |
+          cd target/release
+          sha256sum $BINARY_NAME > $BINARY_NAME.sha256
+          cat $BINARY_NAME.sha256
+
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jsscli-linux-x86_64
-          path: target/release/jsscli
+          name: ${{ env.BINARY_NAME }}-linux-x86_64
+          path: target/release/${{ env.BINARY_NAME }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/jsscli
+          files: |
+            target/release/${{ env.BINARY_NAME }}
+            target/release/${{ env.BINARY_NAME }}.sha256
           generate_release_notes: true
           draft: false
           prerelease: false
