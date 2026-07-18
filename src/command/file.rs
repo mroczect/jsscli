@@ -1,8 +1,9 @@
 use crate::cli::{Cli, FileCommand};
-use crate::error::CliResult;
+use crate::error::CliError;
 use crate::handler;
+use serde_json::Value;
 
-pub async fn handle(cmd: FileCommand, cli: &Cli) -> CliResult<()> {
+pub async fn handle(cmd: FileCommand, cli: &Cli) -> Result<Value, CliError> {
     match cmd {
         FileCommand::Upload {
             file,
