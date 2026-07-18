@@ -69,6 +69,13 @@ pub enum Command {
     Files {
         number: String,
     },
+    Search {
+        query: String,
+        #[arg(long, default_value_t = 20)]
+        limit: u32,
+        #[arg(long)]
+        doctype: Option<String>,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -173,5 +180,19 @@ pub enum FileCommand {
         output: Option<String>,
         #[arg(short = 'y', long)]
         yes: bool,
+    },
+    List {
+        #[arg(long, default_value = "Home")]
+        folder: String,
+        #[arg(long, default_value_t = 50)]
+        limit: u32,
+        #[arg(long)]
+        search: Option<String>,
+        #[arg(long)]
+        file_type: Option<String>,
+        #[arg(long)]
+        attached_to_doctype: Option<String>,
+        #[arg(long)]
+        attached_to_name: Option<String>,
     },
 }
