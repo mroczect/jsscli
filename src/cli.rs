@@ -53,9 +53,21 @@ pub enum Command {
         #[command(subcommand)]
         cmd: DoctypeCommand,
     },
+    CallMethod {
+        method: String,
+        #[arg(long, value_delimiter = ',')]
+        args: Option<Vec<String>>,
+    },
     File {
         #[command(subcommand)]
         cmd: FileCommand,
+    },
+    Attachments {
+        doctype: String,
+        name: String,
+    },
+    Files {
+        number: String,
     },
 }
 
