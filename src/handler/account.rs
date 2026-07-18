@@ -3,12 +3,12 @@ use crate::config::{
     Account, AccountStore, AuthModeSer, Settings,
     accounts::{delete_secret, read_password, set_secret},
 };
-use crate::error::{CliError, CliResult};
-use crate::output;
+use crate::error::CliError;
 use crate::session::SessionRecord;
+use serde_json::{Value, json};
 
 pub async fn add(
-    cli: &Cli,
+    _cli: &Cli,
     name: String,
     url: Option<String>,
     mode: AuthModeKind,
@@ -18,7 +18,7 @@ pub async fn add(
     api_secret: Option<String>,
     sitename: Option<String>,
     activate: bool,
-) -> CliResult<()> {
+) -> Result<Value, CliError> {
     let url = url.ok_or_else(|| CliError::Usage("--url is required".into()))?;
 
     let auth_mode = match mode {
@@ -76,34 +76,26 @@ pub async fn add(
         let mut settings = Settings::load()?;
         settings.active_account = Some(name.clone());
         settings.save()?;
-        if !cli.quiet {
-            output::success(format!("Account `{name}` added and activated"));
-        }
-    } else if !cli.quiet {
-        output::success(format!("Account `{name}` added (not active)"));
     }
-    Ok(())
+
+    Ok(json!({
+        "ok": true,
+        "name": name,
+        "active": activate
+    }))
 }
 
-pub async fn list(cli: &Cli) -> CliResult<()> {
+pub async fn list(_cli: &Cli) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     let store = AccountStore::load()?;
 
-    if store.accounts.is_empty() {
-        if !cli.quiet {
-            output::warn("No accounts configured. Run `jsscli account add <name> --url ...`.");
-        }
-        return Ok(());
-    }
-
-    let active = settings.active_account.as_deref().unwrap_or("");
-    let rows: Vec<serde_json::Value> = store
+    let accounts: Vec<Value> = store
         .list()
         .into_iter()
         .map(|a| {
-            let is_active = a.name == active;
-            serde_json::json!({
-                "active": if is_active { "*" } else { "" },
+            let is_active = Some(a.name.as_str()) == settings.active_account.as_deref();
+            json!({
+                "active": is_active,
                 "name": a.name,
                 "base_url": a.base_url,
                 "mode": match &a.mode {
@@ -115,24 +107,19 @@ pub async fn list(cli: &Cli) -> CliResult<()> {
         })
         .collect();
 
-    let v = serde_json::Value::Array(rows);
-    crate::output::print_data(&v, cli.output)?;
-    Ok(())
+    Ok(json!({ "accounts": accounts }))
 }
 
-pub async fn use_account(cli: &Cli, name: String) -> CliResult<()> {
+pub async fn use_account(_cli: &Cli, name: String) -> Result<Value, CliError> {
     let store = AccountStore::load()?;
     let _ = store.get(&name)?;
     let mut settings = Settings::load()?;
     settings.active_account = Some(name.clone());
     settings.save()?;
-    if !cli.quiet {
-        output::success(format!("Switched active account to `{name}`"));
-    }
-    Ok(())
+    Ok(json!({"ok": true, "active_account": name}))
 }
 
-pub async fn remove(cli: &Cli, name: String) -> CliResult<()> {
+pub async fn remove(_cli: &Cli, name: String) -> Result<Value, CliError> {
     let mut store = AccountStore::load()?;
     let removed = store.remove(&name)?;
     store.save()?;
@@ -152,23 +139,17 @@ pub async fn remove(cli: &Cli, name: String) -> CliResult<()> {
             let _ = SessionRecord::clear();
         }
     }
-    if !cli.quiet {
-        output::success(format!("Removed account `{}`", removed.name));
-    }
-    Ok(())
+    Ok(json!({"ok": true, "removed": name}))
 }
 
-pub async fn show(cli: &Cli, name: Option<String>) -> CliResult<()> {
+pub async fn show(_cli: &Cli, name: Option<String>) -> Result<Value, CliError> {
     let store = AccountStore::load()?;
     let settings = Settings::load()?;
     let target = name.unwrap_or_else(|| settings.active_account.clone().unwrap_or_default());
     let account = store.get(&target)?;
-    let pairs = account.masked_summary();
     let mut map = serde_json::Map::new();
-    for (k, v) in pairs {
-        map.insert(k, serde_json::Value::String(v));
+    for (k, v) in account.masked_summary() {
+        map.insert(k, Value::String(v));
     }
-    let v = serde_json::Value::Object(map);
-    crate::output::print_data(&v, cli.output)?;
-    Ok(())
+    Ok(Value::Object(map))
 }
