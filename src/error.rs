@@ -1,6 +1,7 @@
 use librjss::handler::error::JssError;
 
 #[derive(thiserror::Error, Debug)]
+#[allow(dead_code)]
 pub enum CliError {
     #[error("Usage error: {0}")]
     Usage(String),
