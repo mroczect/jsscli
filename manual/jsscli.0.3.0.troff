@@ -250,7 +250,7 @@ API error (non\-2xx response from server).
 Add an account and log in:
 .PP
 .RS
-\fBjsscli account add prod \-\-url https://app.juragansejati.biz.id \-\-email user@domain.com \-\-activate\fR
+\fBjsscli account add prod \-\-url https://fraperpapp.examples.com \-\-email user@domain.com \-\-activate\fR
 .br
 \fBjsscli auth login\fR
 .RE
