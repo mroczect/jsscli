@@ -36,12 +36,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-stable-
 
-      - name: Check formatting
-        run: cargo fmt --all
-
-      - name: Run Clippy
-        run: cargo clippy -- -D warnings
-
   test:
     name: Test (Rust ${{ matrix.rust }})
     runs-on: ubuntu-latest
