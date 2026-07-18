@@ -8,9 +8,10 @@ pub mod info;
 pub mod manual;
 
 use crate::cli::{Cli, Command};
-use crate::error::CliResult;
+use crate::error::CliError;
+use serde_json::Value;
 
-pub async fn dispatch(cli: Cli) -> CliResult<()> {
+pub async fn dispatch(cli: Cli) -> Result<Value, CliError> {
     match &cli.command {
         Command::Auth { cmd } => auth::handle(cmd.clone(), &cli).await,
         Command::Account { cmd } => account::handle(cmd.clone(), &cli).await,

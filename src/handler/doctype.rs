@@ -1,11 +1,11 @@
 use crate::cli::Cli;
 use crate::client;
 use crate::config::Settings;
-use crate::error::{CliError, CliResult};
-use crate::output;
-use std::io::Read;
+use crate::error::CliError; 
+use serde_json::{Value, json};
+use std::io::{Read, Write}; 
 
-fn read_json_input(file: &str) -> CliResult<serde_json::Value> {
+fn read_json_input(file: &str) -> Result<Value, CliError> {
     let raw = if file == "-" {
         let mut s = String::new();
         std::io::stdin().read_to_string(&mut s)?;
@@ -14,17 +14,16 @@ fn read_json_input(file: &str) -> CliResult<serde_json::Value> {
         let expanded = shellexpand::tilde(file).to_string();
         std::fs::read_to_string(&expanded)?
     };
-    let v: serde_json::Value = serde_json::from_str(&raw)
-        .map_err(|e| CliError::Usage(format!("Invalid JSON in `{file}`: {e}")))?;
-    Ok(v)
+    serde_json::from_str(&raw)
+        .map_err(|e| CliError::Usage(format!("Invalid JSON in `{file}`: {e}")))
 }
 
-pub async fn get(cli: &Cli, doctype: &str, name: &str) -> CliResult<()> {
+pub async fn get(cli: &Cli, doctype: &str, name: &str) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
     let body = client.get_doc(doctype, name).await?;
-    output::print_string(&body, cli.output)?;
-    Ok(())
+    let v: Value = serde_json::from_str(&body)?;
+    Ok(v)
 }
 
 pub async fn list(
@@ -35,17 +34,12 @@ pub async fn list(
     limit: u32,
     start: u32,
     order_by: Option<String>,
-) -> CliResult<()> {
-    if doctype.is_empty() {
-        return Err(CliError::Usage("doctype is required".into()));
-    }
+) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
-
     let mut builder = client.doctype(doctype).limit(limit).limit_start(start);
     if let Some(fields) = fields {
-        let refs: Vec<&str> = fields.iter().map(|s| s.as_str()).collect();
-        builder = builder.fields(refs);
+        builder = builder.fields(fields.iter().map(|s| s.as_str()).collect());
     }
     if let Some(order) = order_by {
         builder = builder.order_by(&order);
@@ -59,37 +53,29 @@ pub async fn list(
         }
         builder = builder.filter(parts[0], parts[1], parts[2]);
     }
-
     let raw = builder.execute_raw().await?;
-    output::print_string(&raw, cli.output)?;
-    Ok(())
+    serde_json::from_str(&raw).map_err(Into::into)
 }
 
-pub async fn create(cli: &Cli, doctype: &str, file: &str) -> CliResult<()> {
+pub async fn create(cli: &Cli, doctype: &str, file: &str) -> Result<Value, CliError> {
     let value = read_json_input(file)?;
     let settings = Settings::load()?;
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
     let resp = client.create_doc(doctype, &value).await?;
-    output::print_string(&resp, cli.output)?;
-    if !cli.quiet {
-        output::success(format!("Created {doctype} document"));
-    }
-    Ok(())
+    let v: Value = serde_json::from_str(&resp)?;
+    Ok(json!({"ok": true, "data": v}))
 }
 
-pub async fn update(cli: &Cli, doctype: &str, name: &str, file: &str) -> CliResult<()> {
+pub async fn update(cli: &Cli, doctype: &str, name: &str, file: &str) -> Result<Value, CliError> {
     let value = read_json_input(file)?;
     let settings = Settings::load()?;
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
     let resp = client.update_doc(doctype, name, &value).await?;
-    output::print_string(&resp, cli.output)?;
-    if !cli.quiet {
-        output::success(format!("Updated {doctype} `{name}`"));
-    }
-    Ok(())
+    let v: Value = serde_json::from_str(&resp)?;
+    Ok(json!({"ok": true, "data": v}))
 }
 
-pub async fn delete(cli: &Cli, doctype: &str, name: &str, yes: bool) -> CliResult<()> {
+pub async fn delete(cli: &Cli, doctype: &str, name: &str, yes: bool) -> Result<Value, CliError> {
     if !yes {
         use std::io::BufRead;
         eprint!("Delete {doctype} `{name}`? [y/N] ");
@@ -102,11 +88,6 @@ pub async fn delete(cli: &Cli, doctype: &str, name: &str, yes: bool) -> CliResul
     }
     let settings = Settings::load()?;
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
-    let _ = client.delete_doc(doctype, name).await?;
-    if !cli.quiet {
-        output::success(format!("Deleted {doctype} `{name}`"));
-    }
-    Ok(())
+    client.delete_doc(doctype, name).await?;
+    Ok(json!({"ok": true, "message": format!("Deleted {doctype} `{name}`")}))
 }
-
-use std::io::Write;
