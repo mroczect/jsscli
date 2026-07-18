@@ -1,6 +1,6 @@
 [package]
 name = "jsscli"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 description = "Command-line interface for librjss"
 authors = ["Muhammad Riduwan Khafidi <mriduwankhafidi@proton.me>"]
@@ -10,7 +10,7 @@ license = "MIT"
 documentation = "https://mroczect.github.io/jsscli/"
 
 [dependencies]
-librjss = { git = "https://github.com/mroczect/librjss.git" }
+librjss = { git = "https://github.com/mroczect/librjss.git", branch = "master" }
 clap = { version = "4.6", features = ["derive", "env", "wrap_help"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
@@ -37,6 +37,7 @@ sha2 = "0.10"
 hkdf = "0.12"
 hex = "0.4"
 minus = { version = "5", features = ["static_output"] }
+urlencoding = "2.1.3"
 
 [build-dependencies]
 chrono = "0.4"

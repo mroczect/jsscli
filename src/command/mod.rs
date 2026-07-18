@@ -9,7 +9,7 @@ pub mod file;
 pub mod files;
 pub mod info;
 pub mod manual;
-
+pub mod search;
 use crate::cli::{Cli, Command};
 use crate::error::CliError;
 use serde_json::Value;
@@ -31,5 +31,10 @@ pub async fn dispatch(cli: Cli) -> Result<Value, CliError> {
             attachments::handle(doctype.clone(), name.clone(), &cli).await
         }
         Command::Files { number } => files::handle(number.clone(), &cli).await,
+        Command::Search {
+            query,
+            limit,
+            doctype,
+        } => search::handle(query.clone(), *limit, doctype.clone(), &cli).await,
     }
 }

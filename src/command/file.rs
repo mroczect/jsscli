@@ -14,5 +14,24 @@ pub async fn handle(cmd: FileCommand, cli: &Cli) -> Result<Value, CliError> {
         FileCommand::Download { url, output, yes } => {
             handler::file::download(cli, &url, output, yes).await
         }
+        FileCommand::List {
+            folder,
+            limit,
+            search,
+            file_type,
+            attached_to_doctype,
+            attached_to_name,
+        } => {
+            handler::file::list_files(
+                cli,
+                &folder,
+                limit,
+                search.as_deref(),
+                file_type.as_deref(),
+                attached_to_doctype.as_deref(),
+                attached_to_name.as_deref(),
+            )
+            .await
+        }
     }
 }

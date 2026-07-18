@@ -10,24 +10,33 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     let (client, _) = client::create_client(&settings, cli.profile.as_deref()).await?;
 
-    let (doctype, docname) = if number.starts_with("ODR-") {
-        ("Data Pengajuan", number.to_string())
+    let pengajuan_name = if number.starts_with("ODR-") {
+        number.to_string()
     } else {
         let result = client
             .doctype("Master Data Nasabah")
             .filter("no_perjanjian", "=", number)
-            .fields(vec!["name"])
+            .fields(vec!["name", "register_id"])
             .limit(1)
             .execute_raw()
             .await?;
         let v: Value = serde_json::from_str(&result)?;
-        let name = v["data"][0]["name"]
-            .as_str()
-            .ok_or_else(|| CliError::Other("Nomor perjanjian tidak ditemukan".into()))?;
-        ("Master Data Nasabah", name.to_string())
+
+        let register_id = v["data"][0]["register_id"].as_str().ok_or_else(|| {
+            CliError::Other(
+                "Nomor perjanjian tidak ditemukan atau tidak memiliki register_id".into(),
+            )
+        })?;
+
+        if register_id.is_empty() {
+            return Err(CliError::Other(
+                "register_id kosong; tidak bisa menemukan Data Pengajuan".into(),
+            ));
+        }
+        register_id.to_string()
     };
 
-    let body = client.get_doc(doctype, &docname).await?;
+    let body = client.get_doc("Data Pengajuan", &pengajuan_name).await?;
     let data: Value = serde_json::from_str(&body)?;
 
     let files = collect_files(&data);
@@ -37,7 +46,7 @@ pub async fn handle(cli: &Cli, number: &str) -> Result<Value, CliError> {
         return Ok(json!({ "downloaded": [] }));
     }
 
-    eprintln!("File-file terlampir di {doctype} `{docname}`:");
+    eprintln!("File-file terlampir di Data Pengajuan `{pengajuan_name}`:");
     for (i, (label, url)) in files.iter().enumerate() {
         eprintln!("  {}. {} -> {}", i + 1, label, url);
     }
