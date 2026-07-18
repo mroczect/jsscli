@@ -1,9 +1,9 @@
 use crate::cli::Cli;
 use crate::client;
 use crate::config::Settings;
-use crate::error::CliError; 
+use crate::error::CliError;
 use serde_json::{Value, json};
-use std::io::{Read, Write}; 
+use std::io::{Read, Write};
 
 fn read_json_input(file: &str) -> Result<Value, CliError> {
     let raw = if file == "-" {

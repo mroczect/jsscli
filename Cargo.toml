@@ -1,6 +1,6 @@
 [package]
 name = "jsscli"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "Command-line interface for librjss"
 authors = ["Muhammad Riduwan Khafidi <mriduwankhafidi@proton.me>"]

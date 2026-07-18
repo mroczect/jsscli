@@ -1,9 +1,12 @@
 pub mod account;
+pub mod attachments;
 pub mod auth;
+pub mod call_method;
 pub mod changelog;
 pub mod config;
 pub mod doctype;
 pub mod file;
+pub mod files;
 pub mod info;
 pub mod manual;
 
@@ -21,5 +24,12 @@ pub async fn dispatch(cli: Cli) -> Result<Value, CliError> {
         Command::Info => info::handle(&cli).await,
         Command::Changelog { count } => changelog::handle(*count, &cli).await,
         Command::Manual => manual::handle(&cli).await,
+        Command::CallMethod { method, args } => {
+            call_method::handle(method.clone(), args.clone(), &cli).await
+        }
+        Command::Attachments { doctype, name } => {
+            attachments::handle(doctype.clone(), name.clone(), &cli).await
+        }
+        Command::Files { number } => files::handle(number.clone(), &cli).await,
     }
 }
