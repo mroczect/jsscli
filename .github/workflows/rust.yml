@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [stable, 1.70.0]
+        rust: [stable, 1.75.0] # MSRV yang aman
     steps:
       - uses: actions/checkout@v4
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y groff
+        run: sudo apt-get update && sudo apt-get install -y groff libdbus-1-dev pkg-config
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -38,7 +38,6 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
-            ${{ runner.os }}-cargo-
 
       - name: Check formatting
         run: cargo fmt --all -- --check
