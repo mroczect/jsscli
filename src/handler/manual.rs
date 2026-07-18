@@ -4,7 +4,7 @@ use minus::{Pager, page_all};
 use serde_json::{Value, json};
 
 pub async fn handle(_cli: &Cli) -> Result<Value, CliError> {
-    let manual_content = include_str!("../../manual/jsscli.0.3.0.txt");
+    let manual_content = include_str!("../../README");
 
     let pager = Pager::new();
     pager

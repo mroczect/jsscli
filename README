@@ -1,227 +1,328 @@
-JSSCLI(1)                            User Commands                            JSSCLI(1)
+JSSCLI(1)					      User Commands					       JSSCLI(1)
 
 NAME
-       jsscli - JSON-first command-line interface for the JSS / Frappe REST API
+       jsscli - JSON-first CLI for the JSS / Frappe REST API
 
 SYNOPSIS
-       jsscli [-q|-v...] [--profile name] COMMAND [options...]
+       jsscli [-q|-v...]  [--profile name] COMMAND [options...]
 
 DESCRIPTION
-       jsscli is a fast, secure, and scriptable CLI for interacting with any Frappe/
-       ERPNext or Juragan Subsystem site. It manages authentication, multiple named
-       accounts, local configuration, and provides full CRUD access to DocTypes,
-       files, custom server methods, and attachments.
+       jsscli is a fast, secure, and scriptable command-line client for any Frappe/ERPNext or Juragan Subsystem site. It
+       provides	 full access to REST resources, custom server methods, file operations, and document attachments, with a
+       consistent JSON output and built-in session management.
 
-       All output is JSON. When stdout is a terminal, JSON is printed with syntax
-       coloring and indentation; when piped or redirected, plain pretty‑printed JSON
-       is used.  Errors are also printed as JSON to stderr, making jsscli ideal for
-       pipelines and automation.
+       All output is JSON. When stdout is a terminal, the JSON is colourised and indented;  when  piped	 or  redirected,
+       plain  pretty-printed  JSON  is	used.	Errors are also printed as JSON to stderr, making integration with shell
+       pipelines and automation tools straightforward.
 
-       Sensitive credentials (passwords, API secrets) are stored in the system
-       keyring.  Session data is encrypted at rest (AES‑256‑GCM).
+       Sensitive credentials (passwords, API secrets) are stored in the system keyring; session	 data  is  encrypted  at
+       rest using AES‑256‑GCM with a key derived via HKDF and a random salt.
 
-OPTIONS
-   Global options
+GLOBAL OPTIONS
        -q, --quiet
-              Suppress non‑error messages printed to stderr (e.g., success hints).
+	      Suppress non-error messages printed to stderr (e.g., progress hints).
 
        -v, --verbose
-              Increase log verbosity (can be repeated). Affects internal logging
-              only; does not change the JSON output.
+	      Increase log verbosity (can be repeated). Affects internal logging only; does not change JSON output.
 
        --profile name
-              Use the specified account profile instead of the active account.
-              Overrides the JSS_PROFILE environment variable.
+	      Use  the	specified  account  profile instead of the active account. Overrides the JSS_PROFILE environment
+	      variable.
 
 COMMANDS
    auth
+       Manage authentication for the active account.
+
        jsscli auth login
-              Authenticate using stored credentials. On success, a session is saved
-              locally and reused by subsequent commands.  Output:
-                  {"ok":true, "account":"...", "full_name":"...", ...}
+	      Authenticate using stored credentials. On success, a session is saved locally  and  reused  by  subsequent
+	      commands. Output example:
+	      {"ok":true, "account":"prod", "full_name":"John Doe", "sitename":"mysite", "roles":["System Manager"]}
 
        jsscli auth logout
-              End the server session and remove the local session record.
+	      End the server session and remove the local session record.
 
        jsscli auth status
-              Show whether a valid session exists for the active account.
+	      Show whether a valid session exists for the active account.
 
        jsscli auth whoami
-              Print the full name, sitename, and roles of the authenticated user.
+	      Display the full name, sitename, and roles of the authenticated user.
 
    account
-       Manage named account profiles stored in ~/.config/jsscli/accounts.toml.
-       Secrets are never written to this file; they stay in the system keyring.
+       Manage named account profiles. Account definitions are stored in ~/.config/jsscli/accounts.toml; secrets are kept
+       in the system keyring.
 
        jsscli account add name [options]
-              Create a new account.
+	      Create a new account.
 
-              --url URL          (required) Base URL of the Frappe site.
-              --mode session|token   Authentication mode (default: session).
-              --email email      Required for session mode.
-              --password pass    Password; if omitted you will be prompted.
-              --api-key key      Required for token mode.
-              --api-secret sec   Required for token mode.
-              --sitename name    Expected site name (optional).
-              --activate         Set this account as active immediately.
+	      --url URL
+		     (Required) Base URL of the Frappe site (e.g., https://mysite.example.com).
+
+	      --mode session|token
+		     Authentication mode (default: session).
+
+	      --email email
+		     Required for session mode.
+
+	      --password pass
+		     Password; if omitted you will be prompted securely.
+
+	      --api-key key
+		     Required for token mode.
+
+	      --api-secret sec
+		     Required for token mode.
+
+	      --sitename name
+		     Expected site name (optional; used for validation).
+
+	      --activate
+		     Set this account as active immediately.
 
        jsscli account list
-              List all accounts (active one marked with active:true).
+	      List all accounts; active one is marked with active:true.
 
        jsscli account use name
-              Switch the active account to name.
+	      Switch the active account to name.
 
        jsscli account remove name
-              Delete an account and its secrets.
+	      Delete an account and all associated secrets.
 
        jsscli account show [name]
-              Show detailed info about an account (secrets masked).
+	      Show detailed information for an account (secrets are masked).
 
    config
        jsscli config set key value
-              Set a configuration key. The special key active_account sets the
-              active account.
+	      Set a configuration key. Special key active_account sets the active account (same as account use).
 
        jsscli config get key
-              Print the value of a key.
+	      Print the value of a configuration key.
 
        jsscli config list
-              List all current settings.
+	      List all current settings.
 
        jsscli config init
-              Create the configuration directory and default files.
+	      Create the configuration directory and default files.
 
        jsscli config path
-              Print the filesystem path to config.toml.
+	      Print the absolute path to the configuration file.
 
    doctype
+       Perform CRUD operations on any DocType.
+
        jsscli doctype get doctype name
-              Retrieve a single document (JSON object with "data" key).
+	      Retrieve a single document. Output contains a top-level "data" key.
 
        jsscli doctype list doctype [options]
-              List documents.
+	      List documents matching filters.
 
-              --fields f1,f2,...   Comma-separated list of fields to return.
-              --filter field,op,value  Filter condition (e.g., status,=,Active).
-              --limit n            Maximum records (default 20).
-              --start n            Offset for pagination.
-              --order-by field     Sort field (append " desc" for descending).
+	      --fields f1,f2,...
+		     Comma-separated list of fields to return.
+
+	      --filter field,op,value
+		     Filter condition (e.g., status,=,Active). Can be repeated.
+
+	      --limit n
+		     Maximum number of records (default: 20).
+
+	      --start n
+		     Offset for pagination.
+
+	      --order-by field
+		     Sort field (append	 desc for descending order).
 
        jsscli doctype create doctype [file]
-              Create a new document. Data is read from a JSON file (or stdin if
-              file is "-").
+	      Create a new document. Data is read from a JSON file (or stdin if file is -).
 
        jsscli doctype update doctype name [file]
-              Update an existing document.
+	      Update an existing document using JSON from file (or stdin).
 
        jsscli doctype delete doctype name [-y|--yes]
-              Delete a document. Confirmation required unless -y is given.
+	      Delete a document. Confirmation is required unless -y is supplied.
 
    file
+       Manage files and attachments.
+
        jsscli file upload file doctype docname fieldname
-              Upload a local file (max 50 MB) and attach it to a document.
+	      Upload a local file (max 50 MB) and attach it to the specified document.
 
        jsscli file download url [-o path] [-y|--yes]
-              Download a file from a relative URL (e.g., /files/report.pdf).
+	      Download a file from a relative URL (e.g., /files/report.pdf). If no -o is given, the file is saved in the
+	      current directory with the basename from the URL.
 
-   call-method
-       jsscli call-method method.path [--args key=val,key=val...]
-              Call any server-side Python method. Arguments are passed as a JSON
-              object.  This is the Swiss‑army knife for accessing custom logic,
-              lazy‑loaded child tables, workspace data, and reports.
+       jsscli file list [options]
+	      List files from a folder (default: Home) with flexible filters.
 
-              Examples:
-                jsscli call-method "juragan.ops...get_lazy_child_rows" \
-                         --args docname=OD-...,tab=informasi_bpkb_tab
-                jsscli call-method "frappe.desk.query_report.run" \
-                         --args report_name=Stok_TTS,filters={}
+	      --folder path
+		     Folder to list (default: "Home").
+
+	      --limit n
+		     Maximum number of files (default: 50).
+
+	      --search pattern
+		     Filter by file name (substring match).
+
+	      --file-type pattern
+		     Filter by file MIME type (substring match).
+
+	      --attached-to-doctype doctype
+		     Filter by linked document type.
+
+	      --attached-to-name docname
+		     Filter by linked document name.
 
    attachments
        jsscli attachments doctype name
-              Scan a document for file attachments (fields with values like
-              /private/files/... or /files/...). Presents a list of files and
-              prompts for download. You can download all (y/enter), cancel (n),
-              or pick specific files by index (e.g., 1,3).
+	      Scan a document for file attachments (fields with values like /private/files/... or /files/...). A list of
+	      files  is displayed and you are prompted to download all, cancel, or select specific files by index (e.g.,
+	      1,3).
 
    files
        jsscli files number
-              Convenience command that accepts a single identifier:
+	      Convenience command that accepts a single identifier:
 
-              - If number starts with "ODR-", it is treated as a Data Pengajuan
-                document name.
-              - Otherwise, it is treated as a no_perjanjian, and the corresponding
-                Master Data Nasabah document is fetched.
+	      •	     If number starts with "ODR-", it is treated as a Data Pengajuan document name.
 
-              Then the attachment download prompt is shown exactly like attachments.
+	      •	     Otherwise, it is treated as a no_perjanjian (loan agreement number); the corresponding Master  Data
+		     Nasabah  record  is fetched to obtain its register_id, and then attachments from the Data Pengajuan
+		     doctype with that ID are listed.
+
+	      The attachment download prompt is then shown, identical to attachments.
+
+   call-method
+       jsscli call-method method.path [--args key=val,key=val...]
+	      Call any server-side Python method. Arguments are passed as a JSON object.  This command is the Swiss army
+	      knife for executing custom logic, lazy-loaded child tables, workspace queries, and reports.
+
+	      Examples:
+	      jsscli call-method "juragan.ops...get_lazy_child_rows" --args docname=OD-...,tab=informasi_bpkb_tab
+	      jsscli call-method "frappe.desk.query_report.run" --args report_name=Stok_TTS,filters={}
+
+   search
+       jsscli search query [options]
+	      Perform a global search across all DocTypes.
+
+	      --limit n
+		     Maximum number of results (default: 20).
+
+	      --doctype doctype
+		     Restrict search to a specific DocType.
+
+   tunggakan
+       jsscli tunggakan no_rekening_kredit
+	      Retrieve the detailed outstanding debt breakdown for a given credit account number. This calls the  server
+	      method  juragan.ops.doctype.master_data_nasabah.master_data_nasabah.cek_rincian_hutang_nasabah and returns
+	      its JSON response. Useful for obtaining the raw data before generating the printable "Kartu Piutang".
+
+   kp
+       jsscli kp no_perjanjian
+	      Generate and download the "Form Rincian Sisa Piutang Nasabah" PDF	 (receivable  card)  for  a  given  loan
+	      agreement number.
+
+	      The command performs the following steps:
+
+	      1.     Find the customer record in Master Data Nasabah using no_perjanjian.
+
+	      2.     Extract no_rekening_kredit (credit account number) and the document name.
+
+	      3.     Call  the server method cek_rincian_hutang_nasabah with the account number to ensure the receivable
+		     data is computed on the server.
+
+	      4.     Download the PDF using the print format "Form Rincian Sisa Piutang Nasabah" (without letterhead).
+
+	      5.     Save the PDF in the system's Downloads folder with	 a  filename  like  Rincian_Sisa_Piutang_<agree‐
+		     ment>.pdf.
+
+	      If  the  server  method fails or the receivable data is still not available, the PDF will contain a place‐
+	      holder message. Ensure the customer has outstanding data before running this command.
 
    info
        jsscli info
-              Print build and version information (name, version, authors, build
-              details, Git status, compiler versions). All data is embedded at
-              compile time; no network calls.
+	      Print detailed build and version information, including Git hash, branch, commit count,  build  timestamp,
+	      compiler	versions,  and target platform.	 This data is embedded at compile time and does not require net‐
+	      work access.
 
    changelog
        jsscli changelog [-n count]
-              Show the Git commit history embedded at build time (up to 50 commits).
-              If the binary was built outside a Git repository, an empty list is
-              returned.
+	      Display the Git commit history embedded at build time (up to 50 commits).	 If the binary was built outside
+	      a Git repository, an empty list is returned.
 
    manual
        jsscli manual
-              Open the built-in manual in a terminal pager (scrollable, searchable).
-              Press q to quit.
+	      Open the built-in manual in a terminal pager (scrollable, searchable).  Press q to quit.
 
 ENVIRONMENT
-       JSS_PROFILE        Name of the account profile to use (overridden by --profile).
-       JSS_EMAIL          Default email when adding an account.
-       JSS_ACTIVE_ACCOUNT Overrides the active_account setting from config.toml.
-       Standard proxy variables (HTTPS_PROXY, etc.) are respected.
+       JSS_PROFILE
+	      Name of the account profile to use (overridden by --profile).
+
+       JSS_EMAIL
+	      Default email when adding a session-based account.
+
+       JSS_ACTIVE_ACCOUNT
+	      Overrides the active_account setting in config.toml.
+
+       Standard proxy variables (HTTPS_PROXY, HTTP_PROXY, NO_PROXY) are respected by the underlying HTTP client.
 
 FILES
-       ~/.config/jsscli/config.toml       Global settings.
-       ~/.config/jsscli/accounts.toml     Account definitions (no secrets).
-       ~/.cache/jsscli/session.enc        Encrypted session data.
-       ~/.cache/jsscli/.session.salt      Salt for encryption key derivation.
+       ~/.config/jsscli/config.toml
+	      Global settings (active account, defaults).
+
+       ~/.config/jsscli/accounts.toml
+	      Account definitions (no secrets).
+
+       ~/.cache/jsscli/session.enc
+	      Encrypted session data.
+
+       ~/.cache/jsscli/.session.salt
+	      Salt file for encryption key derivation.
 
 EXIT STATUS
-       0   Success.
-       1   Generic runtime error.
-       2   Invalid usage or input.
-       3   Not authenticated.
-       4   Network error.
-       5   API error (non‑2xx response from server).
+       0      Success.
+
+       1      Generic runtime error (e.g., I/O, parse error).
+
+       2      Invalid usage or input.
+
+       3      Not authenticated (no valid session).
+
+       4      Network error (connection, timeout).
+
+       5      API error (non-2xx HTTP response from server).
 
 EXAMPLES
        Add an account and log in:
-           jsscli account add prod --url https://fraperpapp.examples.com \
-               --email user@domain.com --activate
-           jsscli auth login
 
-       Get a document:
-           jsscli doctype get "Master Data Nasabah" "OD-26-6003-0001022-0001"
+	      jsscli account add prod --url https://frappe.example.com --email admin@example.com --activate
+	      jsscli auth login
 
-       List active records with specific fields:
-           jsscli doctype list "Master Data Nasabah" \
-               --filter status,=,Aktif \
-               --fields name,nama_nasabah,no_perjanjian \
-               --limit 10
+       List active customers:
+	      jsscli doctype list "Master Data Nasabah" --filter status,=,Aktif --fields name,nama_nasabah,no_perjanjian
+	      --limit 10
 
-       Download attachments using the convenience command:
-           jsscli files OD-26-6003-0001022-0001
-           (then follow the prompt)
+       Download all attachments from a loan agreement:
+	      jsscli files 6001-0000053-0001
+	      (then select y to download all files)
 
-       Call a custom method:
-           jsscli call-method "juragan.collection.utils.get_combined_collection_data" \
-               --args date_from=2026-07-15,date_to=2026-07-21
+       Search for documents containing "VIXION":
+	      jsscli search VIXION --doctype "Master Data Nasabah" --limit 5
 
-       Show build info:
-           jsscli info
+       Check outstanding debt details:
+	      jsscli tunggakan 6001-0000053-0001
+
+       Generate the receivable card PDF:
+	      jsscli kp 6001-0000053-0001
+
+       Call a custom server method:
+	      jsscli	     call-method	 "juragan.collection.utils.get_combined_collection_data"	  --args
+	      date_from=2026-07-01,date_to=2026-07-31
+
+       Show build information:
+	      jsscli info
 
 SEE ALSO
        librjss(3), frappe(7)
        Frappe REST API documentation: https://frappeframework.com/docs
 
 BUGS
-       Report issues at https://github.com/mroczect/jsscli/issues.
+       Report issues at https://github.com/mroczect/jsscli/issues
 
-jsscli 0.3.0                             2026-07-18                              JSSCLI(1)
+jsscli 0.5.1					       2026-07-18					       JSSCLI(1)
