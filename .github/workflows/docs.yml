@@ -35,7 +35,7 @@ jobs:
       - name: Find man page file
         id: manpage
         run: |
-          MANFILE=$(ls manual/jsscli.*.troff | head -1)
+          MANFILE=$(ls manual/jsscli.1 | head -1)
           if [ -z "$MANFILE" ]; then
             echo "Error: No man page found in manual/"
             exit 1
