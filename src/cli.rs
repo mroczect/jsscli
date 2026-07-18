@@ -4,14 +4,12 @@ use clap::{Parser, Subcommand};
 #[command(
     name = "jsscli",
     version,
-    about = "Robust CLI for the JSS / Frappe REST API",
+    about = "JSON-first CLI for the JSS / Frappe REST API",
     long_about = "jsscli manages authentication, accounts, configuration,\n\
-                  and CRUD against Frappe/JSS doctypes, files, and reports."
+                  and CRUD against Frappe/JSS doctypes, files, and reports.\n\
+                  All output is JSON."
 )]
 pub struct Cli {
-    #[arg(long, global = true, value_enum, default_value_t = OutputFormat::Pretty)]
-    pub output: OutputFormat,
-
     #[arg(short, long, global = true)]
     pub quiet: bool,
 
@@ -26,14 +24,6 @@ pub struct Cli {
 }
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug)]
-pub enum OutputFormat {
-    Json,
-    Pretty,
-    Table,
-    Raw,
-}
-
-#[derive(clap::ValueEnum, Clone, Copy, Debug)]
 pub enum AuthModeKind {
     Session,
     Token,
@@ -41,8 +31,8 @@ pub enum AuthModeKind {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Command {
-	Manual,
-	Info,
+    Manual,
+    Info,
     Changelog {
         #[arg(short = 'n', long, default_value_t = 50)]
         count: usize,
