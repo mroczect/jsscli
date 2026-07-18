@@ -1,0 +1,381 @@
+.TH JSSCLI 1 "2026-07-18" "jsscli 0.5.1" "User Commands"
+.SH NAME
+jsscli \- JSON\-first CLI for the JSS / Frappe REST API
+.SH SYNOPSIS
+.B jsscli
+[\fB\-q\fR|\fB\-v\fR...]
+[\fB\-\-profile\fR \fIname\fR]
+\fICOMMAND\fR [\fIoptions\fR...]
+.SH DESCRIPTION
+.B jsscli
+is a fast, secure, and scriptable command\-line client for any Frappe/ERPNext
+or Juragan Subsystem site. It provides full access to REST resources, custom
+server methods, file operations, and document attachments, with a consistent
+JSON output and built\-in session management.
+
+All output is JSON. When stdout is a terminal, the JSON is colourised and
+indented; when piped or redirected, plain pretty\-printed JSON is used.
+Errors are also printed as JSON to stderr, making integration with shell
+pipelines and automation tools straightforward.
+
+Sensitive credentials (passwords, API secrets) are stored in the system
+keyring; session data is encrypted at rest using AES‑256‑GCM with a key
+derived via HKDF and a random salt.
+.SH GLOBAL OPTIONS
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Suppress non\-error messages printed to stderr (e.g., progress hints).
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase log verbosity (can be repeated). Affects internal logging only;
+does not change JSON output.
+.TP
+\fB\-\-profile\fR \fIname\fR
+Use the specified account profile instead of the active account. Overrides
+the \fBJSS_PROFILE\fR environment variable.
+.SH COMMANDS
+.SS auth
+Manage authentication for the active account.
+.TP
+\fBjsscli auth login\fR
+Authenticate using stored credentials. On success, a session is saved
+locally and reused by subsequent commands. Output example:
+.RS
+{"ok":true, "account":"prod", "full_name":"John Doe", "sitename":"mysite", "roles":["System Manager"]}
+.RE
+.TP
+\fBjsscli auth logout\fR
+End the server session and remove the local session record.
+.TP
+\fBjsscli auth status\fR
+Show whether a valid session exists for the active account.
+.TP
+\fBjsscli auth whoami\fR
+Display the full name, sitename, and roles of the authenticated user.
+.SS account
+Manage named account profiles. Account definitions are stored in
+\fI~/.config/jsscli/accounts.toml\fR; secrets are kept in the system keyring.
+.TP
+\fBjsscli account add\fR \fIname\fR [\fIoptions\fR]
+Create a new account.
+.RS
+.TP
+\fB\-\-url\fR \fIURL\fR
+(Required) Base URL of the Frappe site (e.g., https://mysite.example.com).
+.TP
+\fB\-\-mode\fR \fBsession\fR|\fBtoken\fR
+Authentication mode (default: \fBsession\fR).
+.TP
+\fB\-\-email\fR \fIemail\fR
+Required for session mode.
+.TP
+\fB\-\-password\fR \fIpass\fR
+Password; if omitted you will be prompted securely.
+.TP
+\fB\-\-api\-key\fR \fIkey\fR
+Required for token mode.
+.TP
+\fB\-\-api\-secret\fR \fIsec\fR
+Required for token mode.
+.TP
+\fB\-\-sitename\fR \fIname\fR
+Expected site name (optional; used for validation).
+.TP
+\fB\-\-activate\fR
+Set this account as active immediately.
+.RE
+.TP
+\fBjsscli account list\fR
+List all accounts; active one is marked with \fBactive:true\fR.
+.TP
+\fBjsscli account use\fR \fIname\fR
+Switch the active account to \fIname\fR.
+.TP
+\fBjsscli account remove\fR \fIname\fR
+Delete an account and all associated secrets.
+.TP
+\fBjsscli account show\fR [\fIname\fR]
+Show detailed information for an account (secrets are masked).
+.SS config
+.TP
+\fBjsscli config set\fR \fIkey\fR \fIvalue\fR
+Set a configuration key. Special key \fBactive_account\fR sets the active
+account (same as \fBaccount use\fR).
+.TP
+\fBjsscli config get\fR \fIkey\fR
+Print the value of a configuration key.
+.TP
+\fBjsscli config list\fR
+List all current settings.
+.TP
+\fBjsscli config init\fR
+Create the configuration directory and default files.
+.TP
+\fBjsscli config path\fR
+Print the absolute path to the configuration file.
+.SS doctype
+Perform CRUD operations on any DocType.
+.TP
+\fBjsscli doctype get\fR \fIdoctype\fR \fIname\fR
+Retrieve a single document. Output contains a top\-level \fB"data"\fR key.
+.TP
+\fBjsscli doctype list\fR \fIdoctype\fR [\fIoptions\fR]
+List documents matching filters.
+.RS
+.TP
+\fB\-\-fields\fR \fIf1,f2,...\fR
+Comma\-separated list of fields to return.
+.TP
+\fB\-\-filter\fR \fIfield,op,value\fR
+Filter condition (e.g., \fBstatus,=,Active\fR). Can be repeated.
+.TP
+\fB\-\-limit\fR \fIn\fR
+Maximum number of records (default: 20).
+.TP
+\fB\-\-start\fR \fIn\fR
+Offset for pagination.
+.TP
+\fB\-\-order\-by\fR \fIfield\fR
+Sort field (append \fB desc\fR for descending order).
+.RE
+.TP
+\fBjsscli doctype create\fR \fIdoctype\fR [\fIfile\fR]
+Create a new document. Data is read from a JSON file (or stdin if \fIfile\fR
+is \fB\-\fR).
+.TP
+\fBjsscli doctype update\fR \fIdoctype\fR \fIname\fR [\fIfile\fR]
+Update an existing document using JSON from \fIfile\fR (or stdin).
+.TP
+\fBjsscli doctype delete\fR \fIdoctype\fR \fIname\fR [\fB\-y\fR|\fB\-\-yes\fR]
+Delete a document. Confirmation is required unless \fB\-y\fR is supplied.
+.SS file
+Manage files and attachments.
+.TP
+\fBjsscli file upload\fR \fIfile\fR \fIdoctype\fR \fIdocname\fR \fIfieldname\fR
+Upload a local file (max 50 MB) and attach it to the specified document.
+.TP
+\fBjsscli file download\fR \fIurl\fR [\fB\-o\fR \fIpath\fR] [\fB\-y\fR|\fB\-\-yes\fR]
+Download a file from a relative URL (e.g., \fI/files/report.pdf\fR). If no
+\fB\-o\fR is given, the file is saved in the current directory with the
+basename from the URL.
+.TP
+\fBjsscli file list\fR [\fIoptions\fR]
+List files from a folder (default: \fBHome\fR) with flexible filters.
+.RS
+.TP
+\fB\-\-folder\fR \fIpath\fR
+Folder to list (default: "Home").
+.TP
+\fB\-\-limit\fR \fIn\fR
+Maximum number of files (default: 50).
+.TP
+\fB\-\-search\fR \fIpattern\fR
+Filter by file name (substring match).
+.TP
+\fB\-\-file\-type\fR \fIpattern\fR
+Filter by file MIME type (substring match).
+.TP
+\fB\-\-attached\-to\-doctype\fR \fIdoctype\fR
+Filter by linked document type.
+.TP
+\fB\-\-attached\-to\-name\fR \fIdocname\fR
+Filter by linked document name.
+.RE
+.SS attachments
+.TP
+\fBjsscli attachments\fR \fIdoctype\fR \fIname\fR
+Scan a document for file attachments (fields with values like
+\fI/private/files/...\fR or \fI/files/...\fR). A list of files is displayed
+and you are prompted to download all, cancel, or select specific files by
+index (e.g., \fB1,3\fR).
+.SS files
+.TP
+\fBjsscli files\fR \fInumber\fR
+Convenience command that accepts a single identifier:
+.RS
+.IP \(bu
+If \fInumber\fR starts with "ODR\-", it is treated as a \fBData Pengajuan\fR
+document name.
+.IP \(bu
+Otherwise, it is treated as a \fIno_perjanjian\fR (loan agreement number); the
+corresponding \fBMaster Data Nasabah\fR record is fetched to obtain its
+\fBregister_id\fR, and then attachments from the \fBData Pengajuan\fR
+doctype with that ID are listed.
+.PP
+The attachment download prompt is then shown, identical to
+\fBattachments\fR.
+.RE
+.SS call\-method
+.TP
+\fBjsscli call\-method\fR \fImethod.path\fR [\fB\-\-args\fR \fIkey=val,key=val...\fR]
+Call any server\-side Python method. Arguments are passed as a JSON object.
+This command is the Swiss army knife for executing custom logic, lazy\-loaded
+child tables, workspace queries, and reports.
+.RS
+.PP
+Examples:
+.br
+\fBjsscli call\-method\fR "juragan.ops...get_lazy_child_rows" \fB\-\-args\fR docname=OD\-...,tab=informasi_bpkb_tab
+.br
+\fBjsscli call\-method\fR "frappe.desk.query_report.run" \fB\-\-args\fR report_name=Stok_TTS,filters={}
+.RE
+.SS search
+.TP
+\fBjsscli search\fR \fIquery\fR [\fIoptions\fR]
+Perform a global search across all DocTypes.
+.RS
+.TP
+\fB\-\-limit\fR \fIn\fR
+Maximum number of results (default: 20).
+.TP
+\fB\-\-doctype\fR \fIdoctype\fR
+Restrict search to a specific DocType.
+.RE
+.SS tunggakan
+.TP
+\fBjsscli tunggakan\fR \fIno_rekening_kredit\fR
+Retrieve the detailed outstanding debt breakdown for a given credit account
+number. This calls the server method
+\fIjuragan.ops.doctype.master_data_nasabah.master_data_nasabah.cek_rincian_hutang_nasabah\fR
+and returns its JSON response. Useful for obtaining the raw data before
+generating the printable "Kartu Piutang".
+.SS kp
+.TP
+\fBjsscli kp\fR \fIno_perjanjian\fR
+Generate and download the "Form Rincian Sisa Piutang Nasabah" PDF
+(receivable card) for a given loan agreement number.
+.RS
+.PP
+The command performs the following steps:
+.IP 1.
+Find the customer record in \fBMaster Data Nasabah\fR using \fIno_perjanjian\fR.
+.IP 2.
+Extract \fBno_rekening_kredit\fR (credit account number) and the document name.
+.IP 3.
+Call the server method \fBcek_rincian_hutang_nasabah\fR with the account
+number to ensure the receivable data is computed on the server.
+.IP 4.
+Download the PDF using the print format "Form Rincian Sisa Piutang Nasabah"
+(without letterhead).
+.IP 5.
+Save the PDF in the system's \fBDownloads\fR folder with a filename like
+\fIRincian_Sisa_Piutang_<agreement>.pdf\fR.
+.PP
+If the server method fails or the receivable data is still not available,
+the PDF will contain a placeholder message. Ensure the customer has
+outstanding data before running this command.
+.RE
+.SS info
+.TP
+\fBjsscli info\fR
+Print detailed build and version information, including Git hash, branch,
+commit count, build timestamp, compiler versions, and target platform.
+This data is embedded at compile time and does not require network access.
+.SS changelog
+.TP
+\fBjsscli changelog\fR [\fB\-n\fR \fIcount\fR]
+Display the Git commit history embedded at build time (up to 50 commits).
+If the binary was built outside a Git repository, an empty list is returned.
+.SS manual
+.TP
+\fBjsscli manual\fR
+Open the built\-in manual in a terminal pager (scrollable, searchable).
+Press \fBq\fR to quit.
+.SH ENVIRONMENT
+.TP
+\fBJSS_PROFILE\fR
+Name of the account profile to use (overridden by \fB\-\-profile\fR).
+.TP
+\fBJSS_EMAIL\fR
+Default email when adding a session\-based account.
+.TP
+\fBJSS_ACTIVE_ACCOUNT\fR
+Overrides the \fBactive_account\fR setting in \fIconfig.toml\fR.
+.PP
+Standard proxy variables (\fBHTTPS_PROXY\fR, \fBHTTP_PROXY\fR, \fBNO_PROXY\fR)
+are respected by the underlying HTTP client.
+.SH FILES
+.TP
+\fI~/.config/jsscli/config.toml\fR
+Global settings (active account, defaults).
+.TP
+\fI~/.config/jsscli/accounts.toml\fR
+Account definitions (no secrets).
+.TP
+\fI~/.cache/jsscli/session.enc\fR
+Encrypted session data.
+.TP
+\fI~/.cache/jsscli/.session.salt\fR
+Salt file for encryption key derivation.
+.SH EXIT STATUS
+.TP
+0
+Success.
+.TP
+1
+Generic runtime error (e.g., I/O, parse error).
+.TP
+2
+Invalid usage or input.
+.TP
+3
+Not authenticated (no valid session).
+.TP
+4
+Network error (connection, timeout).
+.TP
+5
+API error (non\-2xx HTTP response from server).
+.SH EXAMPLES
+Add an account and log in:
+.PP
+.RS
+\fBjsscli account add prod \-\-url https://frappe.example.com \-\-email admin@example.com \-\-activate\fR
+.br
+\fBjsscli auth login\fR
+.RE
+.PP
+List active customers:
+.RS
+\fBjsscli doctype list "Master Data Nasabah" \-\-filter status,=,Aktif \-\-fields name,nama_nasabah,no_perjanjian \-\-limit 10\fR
+.RE
+.PP
+Download all attachments from a loan agreement:
+.RS
+\fBjsscli files 6001\-0000053\-0001\fR
+.br
+(then select \fBy\fR to download all files)
+.RE
+.PP
+Search for documents containing "VIXION":
+.RS
+\fBjsscli search VIXION \-\-doctype "Master Data Nasabah" \-\-limit 5\fR
+.RE
+.PP
+Check outstanding debt details:
+.RS
+\fBjsscli tunggakan 6001\-0000053\-0001\fR
+.RE
+.PP
+Generate the receivable card PDF:
+.RS
+\fBjsscli kp 6001\-0000053\-0001\fR
+.RE
+.PP
+Call a custom server method:
+.RS
+\fBjsscli call\-method "juragan.collection.utils.get_combined_collection_data" \fR
+\fB\-\-args date_from=2026\-07\-01,date_to=2026\-07\-31\fR
+.RE
+.PP
+Show build information:
+.RS
+\fBjsscli info\fR
+.RE
+.SH SEE ALSO
+.BR librjss (3),
+.BR frappe (7)
+.br
+Frappe REST API documentation: \fIhttps://frappeframework.com/docs\fR
+.SH BUGS
+Report issues at \fIhttps://github.com/mroczect/jsscli/issues\fR
