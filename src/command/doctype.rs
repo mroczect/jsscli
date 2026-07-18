@@ -1,8 +1,9 @@
 use crate::cli::{Cli, DoctypeCommand};
-use crate::error::CliResult;
+use crate::error::CliError;
 use crate::handler;
+use serde_json::Value;
 
-pub async fn handle(cmd: DoctypeCommand, cli: &Cli) -> CliResult<()> {
+pub async fn handle(cmd: DoctypeCommand, cli: &Cli) -> Result<Value, CliError> {
     match cmd {
         DoctypeCommand::Get { doctype, name } => handler::doctype::get(cli, &doctype, &name).await,
         DoctypeCommand::List {
