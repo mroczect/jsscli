@@ -9,3 +9,4 @@ pub mod file;
 pub mod files;
 pub mod info;
 pub mod manual;
+pub mod search;
