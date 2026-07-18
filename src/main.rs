@@ -10,6 +10,7 @@ mod session;
 use clap::Parser;
 use cli::Cli;
 use serde_json::json;
+use std::io::IsTerminal;
 
 #[tokio::main]
 async fn main() {
@@ -17,7 +18,13 @@ async fn main() {
 
     match command::dispatch(cli).await {
         Ok(value) => {
-            println!("{}", serde_json::to_string(&value).unwrap());
+            if std::io::stdout().is_terminal() {
+                let colored = colored_json::to_colored_json_auto(&value)
+                    .unwrap_or_else(|_| value.to_string());
+                println!("{colored}");
+            } else {
+                println!("{}", serde_json::to_string_pretty(&value).unwrap());
+            }
         }
         Err(e) => {
             let error_json = json!({
