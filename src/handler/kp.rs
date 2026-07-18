@@ -3,6 +3,7 @@ use crate::client;
 use crate::config::Settings;
 use crate::error::CliError;
 use serde_json::Value;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub async fn handle(cli: &Cli, no_perjanjian: &str) -> Result<Value, CliError> {
@@ -12,22 +13,40 @@ pub async fn handle(cli: &Cli, no_perjanjian: &str) -> Result<Value, CliError> {
     let raw = client
         .doctype("Master Data Nasabah")
         .filter("no_perjanjian", "=", no_perjanjian)
-        .fields(vec!["name"])
+        .fields(vec!["name", "no_rekening_kredit"])
         .limit(1)
         .execute_raw()
         .await?;
 
     let data: Value = serde_json::from_str(&raw)?;
-    let docname = data["data"]
+    let nasabah = data["data"]
         .as_array()
         .and_then(|arr| arr.first())
-        .and_then(|doc| doc["name"].as_str())
         .ok_or_else(|| {
             CliError::Other(format!(
                 "No nasabah found with no_perjanjian: {}",
                 no_perjanjian
             ))
         })?;
+
+    let docname = nasabah["name"]
+        .as_str()
+        .ok_or_else(|| CliError::Other("Missing docname".into()))?;
+
+    let no_rekening = nasabah["no_rekening_kredit"]
+        .as_str()
+        .ok_or_else(|| CliError::Other("Missing no_rekening_kredit".into()))?;
+
+    let mut params = HashMap::new();
+    params.insert("no_rekening_kredit".to_string(), no_rekening.to_string());
+    params.insert("docname".to_string(), docname.to_string());
+
+    let _ = client
+        .call_method(
+            "juragan.ops.doctype.master_data_nasabah.master_data_nasabah.cek_rincian_hutang_nasabah",
+            Some(params),
+        )
+        .await?;
 
     let pdf_bytes = client
         .download_pdf_kartu_piutang(
