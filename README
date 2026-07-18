@@ -193,7 +193,7 @@ EXIT STATUS
 
 EXAMPLES
        Add an account and log in:
-           jsscli account add prod --url https://app.juragansejati.biz.id \
+           jsscli account add prod --url https://fraperpapp.examples.com \
                --email user@domain.com --activate
            jsscli auth login
 
