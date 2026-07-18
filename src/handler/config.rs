@@ -1,54 +1,46 @@
 use crate::cli::Cli;
 use crate::config::Settings;
-use crate::error::CliResult;
-use crate::output;
-use crate::session::SessionRecord;
+use crate::error::CliError;
+use serde_json::{Value, json};
 
-pub async fn set(_cli: &Cli, key: String, value: String) -> CliResult<()> {
+pub async fn set(_cli: &Cli, key: String, value: String) -> Result<Value, CliError> {
     let mut settings = Settings::load()?;
     settings.set(&key, &value)?;
     settings.save()?;
-    output::success(format!("{key} = {value}"));
-    Ok(())
+    Ok(json!({"ok": true, "key": key, "value": value}))
 }
 
-pub async fn get(_cli: &Cli, key: String) -> CliResult<()> {
+pub async fn get(_cli: &Cli, key: String) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     match settings.get(&key) {
-        Some(v) => println!("{v}"),
-        None => println!("(not set)"),
+        Some(v) => Ok(Value::String(v)),
+        None => Err(CliError::Config(format!("Key `{key}` not found"))),
     }
-    Ok(())
 }
 
-pub async fn list(_cli: &Cli) -> CliResult<()> {
+pub async fn list(_cli: &Cli) -> Result<Value, CliError> {
     let settings = Settings::load()?;
     let pairs = settings.list_pairs();
     let mut map = serde_json::Map::new();
     for (k, v) in pairs {
-        map.insert(k, serde_json::Value::String(v));
+        map.insert(k, Value::String(v));
     }
-    let v = serde_json::Value::Object(map);
-    crate::output::print_data(&v, crate::cli::OutputFormat::Table)?;
-    Ok(())
+    Ok(Value::Object(map))
 }
 
-pub async fn init(_cli: &Cli) -> CliResult<()> {
+pub async fn init(_cli: &Cli) -> Result<Value, CliError> {
     Settings::ensure_dirs()?;
-    let _settings = Settings::load()?;
-    let _accounts = crate::config::AccountStore::load()?;
-    let _ = SessionRecord::path();
-    output::success("Initialized jsscli configuration");
-    println!("  config:   {}", Settings::path()?.display());
-    println!(
-        "  accounts: {}",
-        crate::config::AccountStore::path()?.display()
-    );
-    println!("  session:  {}", SessionRecord::path()?.display());
-    Ok(())
+    let _ = Settings::load()?;
+    let _ = crate::config::AccountStore::load()?;
+    let _ = crate::session::SessionRecord::path();
+    Ok(json!({
+        "ok": true,
+        "config_path": Settings::path()?.display().to_string(),
+        "accounts_path": crate::config::AccountStore::path()?.display().to_string(),
+        "session_path": crate::session::SessionRecord::path()?.display().to_string(),
+    }))
 }
 
-pub async fn path_cmd(_cli: &Cli) -> CliResult<()> {
-    println!("{}", Settings::path()?.display());
-    Ok(())
+pub async fn path_cmd(_cli: &Cli) -> Result<Value, CliError> {
+    Ok(Value::String(Settings::path()?.display().to_string()))
 }
