@@ -1536,7 +1536,7 @@ dependencies = [
 
 [[package]]
 name = "jsscli"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1607,8 +1607,8 @@ dependencies = [
 
 [[package]]
 name = "librjss"
-version = "2.1.0"
-source = "git+https://github.com/mroczect/librjss.git?branch=master#6eef75a62f647518f5f7f22542021db946ba7607"
+version = "2.2.1"
+source = "git+https://github.com/mroczect/librjss.git?branch=master#4c0edf7c90f0a89323994594cac3809977e176d0"
 dependencies = [
  "backoff",
  "http",
